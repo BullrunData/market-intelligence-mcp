@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "bullrundata-market-intelligence": {
+      "command": "npx",
+      "args": ["tsx", "C:\\Users\\JaySun\\market-intelligence-mcp\\src\\index.ts"],
+      "env": {
+        "FRED_API_KEY": "your-fred-api-key-here",
+        "RECESSION_API_URL": "https://recession-dashboard-production.up.railway.app"
+      }
+    }
+  }
+}
