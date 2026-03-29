@@ -34,7 +34,7 @@ claude mcp add market-intelligence -- npx -y @bullrundata/market-intelligence
 
 Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/day, no credit card required.
 
-## Available Tools (20)
+## Available Tools (19)
 
 ### Recession Intelligence
 
@@ -46,7 +46,6 @@ Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/d
 | `market_regime` | Market cycle phase (early/mid/late/recession) |
 | `confirmation_status` | 4 coincident indicators confirming or denying signals |
 | `sahm_rule` | Sahm Rule calculation — predicted every recession since 1970 |
-| `recession_timing` | Estimated months to recession based on leading indicators |
 
 ### Capital Rotation
 

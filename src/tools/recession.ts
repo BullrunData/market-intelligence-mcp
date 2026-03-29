@@ -63,13 +63,4 @@ export function registerRecessionTools(server: McpServer) {
     },
   )
 
-  server.tool(
-    'recession_timing',
-    'Estimate when a recession might start based on leading indicator lead times (yield curve 10mo, LEI 6mo, housing 12mo, claims 2mo).',
-    {},
-    async () => {
-      const data = await apiGet('/v1/recession/timing')
-      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
-    },
-  )
 }
