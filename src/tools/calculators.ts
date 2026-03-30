@@ -2,6 +2,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { apiPost } from '../lib/api-client.js'
 
+const READ_ONLY = { readOnlyHint: true, destructiveHint: false } as const
+
 export function registerCalculatorTools(server: McpServer) {
   server.tool(
     'investment_property_analysis',
@@ -20,6 +22,7 @@ export function registerCalculatorTools(server: McpServer) {
       propertyMgmtPct: z.number().default(0).describe('Property management as % of rent'),
       closingCostsPct: z.number().default(3).describe('Closing costs percentage'),
     },
+    READ_ONLY,
     async (input) => {
       const data = await apiPost('/v1/calculators/investment-property', input)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -51,6 +54,7 @@ export function registerCalculatorTools(server: McpServer) {
       useInitialLoan: z.boolean().default(false).describe('Whether initial purchase used a loan'),
       initialLoanAmount: z.number().default(0).describe('Initial loan amount if used'),
     },
+    READ_ONLY,
     async (input) => {
       const data = await apiPost('/v1/calculators/brrrr', input)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
