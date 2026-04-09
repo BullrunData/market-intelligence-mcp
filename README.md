@@ -1,6 +1,6 @@
 # Market Intelligence MCP Server
 
-> Recession probability scoring, capital rotation analysis, investment calculators, and real-time economic data — for Claude, ChatGPT, Cursor, and any MCP client.
+> Recession probability, capital rotation, macro cascade scenario analysis, investment calculators, and real-time economic data — for Claude, ChatGPT, Cursor, and any MCP client.
 
 Powered by the [BullrunData API](https://bullrundata.com).
 
@@ -34,7 +34,7 @@ claude mcp add market-intelligence -- npx -y @bullrundata/market-intelligence
 
 Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/day, no credit card required.
 
-## Available Tools (19)
+## Available Tools (23)
 
 ### Recession Intelligence
 
@@ -75,6 +75,17 @@ Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/d
 | `yield_curve` | Yield spreads and inversion detection |
 | `market_sentiment` | VIX, financial conditions, stress, consumer sentiment |
 
+### Cascade Engine (Macro Scenario Analysis)
+
+| Tool | Description |
+|------|-------------|
+| `cascade_list` | List all 10 macro catalyst scenarios |
+| `cascade_analysis` | Full chain reaction for a catalyst with live data enrichment |
+| `cascade_search` | Search catalysts by keyword (e.g., "oil", "dollar", "china") |
+| `cascade_by_category` | Filter by category: geopolitical, monetary, credit, commodity, currency, structural |
+
+**Available Catalysts:** Oil Supply Shock, Dollar Liquidity Squeeze, Fed Emergency Rate Cut, US Recession, China-Taiwan Escalation, Yield Curve Inversion, Credit Market Freeze, EM Currency Crisis, Trade War Escalation, Sovereign Debt Crisis
+
 ## Example Conversations
 
 ### "What's the current recession risk?"
@@ -91,6 +102,11 @@ Claude uses `investment_property_analysis` + `interest_rates`:
 
 Claude uses `capital_rotation_score` + `divergence_alerts`:
 > Capital rotation score: -3 (NEUTRAL / MIXED SIGNALS). VIX elevated at 27. Gold catching a fear bid. Copper holding — not a structural breakdown. Playbook: quality and diversification over concentrated bets.
+
+### "What happens if oil hits $120?"
+
+Claude uses `cascade_analysis` + `capital_rotation_score`:
+> Oil Supply Shock cascade: Dollar demand surges (mechanical) -> Asian FX reserves drain (likely, weeks) -> Asian equity outflows (likely) -> Forced rate hikes in Asia (probable, months). Current capital rotation score: -13 (neutral/mixed). Playbook: inflation hedges (XLE, TIP) and cash reserves. Watch Fed swap line usage for systemic signal.
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 /**
  * Market Intelligence MCP Server
  *
- * 20 tools: 12 unique (recession, capital rotation, investment analysis) + 8 commodity (FRED)
+ * 23 tools: 6 recession + 3 capital rotation + 2 calculators + 8 FRED + 4 cascade
  * Transports: stdio (local) and streamable HTTP (remote)
  */
 
