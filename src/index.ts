@@ -12,6 +12,7 @@ import { registerRecessionTools } from './tools/recession.js'
 import { registerCapitalRotationTools } from './tools/capital-rotation.js'
 import { registerCalculatorTools } from './tools/calculators.js'
 import { registerFredTools } from './tools/fred.js'
+import { registerCascadeTools } from './tools/cascade.js'
 
 const server = new McpServer({
   name: 'market-intelligence',
@@ -24,6 +25,7 @@ registerRecessionTools(server)
 registerCapitalRotationTools(server)
 registerCalculatorTools(server)
 registerFredTools(server)
+registerCascadeTools(server)
 
 // Start server
 async function main() {

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "vercel-build": "echo 'skip tsc for vercel'",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "prepublishOnly": "npm run build"
@@ -31,7 +32,11 @@
   "homepage": "https://bullrundata.com",
   "author": "BullrunData <support@bullrundata.com>",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1"
+    "@hono/node-server": "^1.19.11",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@neondatabase/serverless": "^1.0.2",
+    "@vercel/node": "^5.6.22",
+    "hono": "^4.12.9"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
