@@ -2,32 +2,30 @@
 /**
  * Market Intelligence MCP Server
  *
- * 23 tools: 6 recession + 3 capital rotation + 2 calculators + 8 FRED + 4 cascade
+ * 23 tools: 6 macro + 8 indicators + 3 markets + 2 calculators + 4 cascade
  * Transports: stdio (local) and streamable HTTP (remote)
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { registerRecessionTools } from './tools/recession.js'
-import { registerCapitalRotationTools } from './tools/capital-rotation.js'
+import { registerMacroTools } from './tools/macro.js'
+import { registerIndicatorTools } from './tools/indicators.js'
+import { registerMarketTools } from './tools/markets.js'
 import { registerCalculatorTools } from './tools/calculators.js'
-import { registerFredTools } from './tools/fred.js'
 import { registerCascadeTools } from './tools/cascade.js'
 
 const server = new McpServer({
   name: 'market-intelligence',
-  version: '0.1.0',
-  description: 'Market Intelligence MCP — recession probability, capital rotation scoring, investment analysis, and FRED economic data',
+  version: '0.2.0',
+  description: 'Market Intelligence MCP — recession probability, sector rotation, institutional positioning, macro cascade scenarios, real estate calculators, and economic data',
 })
 
-// Register all tool groups
-registerRecessionTools(server)
-registerCapitalRotationTools(server)
+registerMacroTools(server)
+registerIndicatorTools(server)
+registerMarketTools(server)
 registerCalculatorTools(server)
-registerFredTools(server)
 registerCascadeTools(server)
 
-// Start server
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)

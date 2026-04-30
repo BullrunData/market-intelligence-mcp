@@ -26,19 +26,18 @@ async function enrichWithLiveData(tree: CatalystTree): Promise<Record<string, un
 
   // Fetch live data in parallel
   const toolMap: Record<string, string> = {
-    capital_rotation_score: '/v1/capital-rotation/score',
-    capital_rotation_instruments: '/v1/capital-rotation/instruments',
-    fed_stance: '/v1/recession/fed-stance',
-    recession_probability: '/v1/recession/probability',
-    recession_indicators: '/v1/recession/indicators',
-    interest_rates: '/v1/fred/interest-rates',
-    yield_curve: '/v1/analysis/yield-curve',
-    inflation_data: '/v1/fred/inflation',
-    employment_data: '/v1/analysis/employment',
-    housing_data: '/v1/analysis/housing',
-    market_sentiment: '/v1/analysis/market-sentiment',
-    market_regime: '/v1/recession/regime',
-    sahm_rule: '/v1/recession/sahm',
+    sectors_rotation: '/api/v1/sectors/rotation',
+    institutional_cftc: '/api/v1/institutional/cftc',
+    fed_stance: '/api/v1/dashboard/summary',
+    recession_probability: '/api/v1/model/probability',
+    recession_indicators: '/api/v1/dashboard/summary',
+    interest_rates: '/api/v1/indicators?category=Interest%20Rates',
+    yield_curve: '/api/v1/indicators/T10Y2Y',
+    inflation_data: '/api/v1/indicators?category=Inflation',
+    employment_data: '/api/v1/indicators?category=Labor%20Market',
+    housing_data: '/api/v1/indicators?category=Housing',
+    market_sentiment: '/api/v1/indicators?category=Markets',
+    market_regime: '/api/v1/model/probability',
   }
 
   const fetches = Array.from(toolsToFetch).map(async (tool) => {

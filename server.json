@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.jbrand0n/market-intelligence-mcp",
-  "description": "Recession probability, capital rotation scoring, macro cascade scenario analysis, and economic data API",
+  "description": "Recession probability, sector rotation, institutional positioning (CFTC/TIC), macro cascade scenarios, real estate calculators, and economic data API",
   "repository": {
     "url": "https://github.com/BullrunData/market-intelligence-mcp",
     "source": "github"
   },
-  "version": "0.1.4",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@bullrundata/market-intelligence",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },

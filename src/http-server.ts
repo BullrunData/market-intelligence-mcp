@@ -17,10 +17,10 @@ import { cors } from 'hono/cors'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
-import { registerRecessionTools } from './tools/recession.js'
-import { registerCapitalRotationTools } from './tools/capital-rotation.js'
+import { registerMacroTools } from './tools/macro.js'
+import { registerIndicatorTools } from './tools/indicators.js'
+import { registerMarketTools } from './tools/markets.js'
 import { registerCalculatorTools } from './tools/calculators.js'
-import { registerFredTools } from './tools/fred.js'
 import { registerCascadeTools } from './tools/cascade.js'
 import { BullrunOAuthProvider, RedirectError, handleGitHubCallback } from './auth/oauth-provider.js'
 import { verifyToken } from './auth/token-store.js'
@@ -146,14 +146,14 @@ function createMcpServer(apiKey?: string): McpServer {
 
   const server = new McpServer({
     name: 'market-intelligence',
-    version: '0.1.2',
-    description: 'Market Intelligence MCP — recession probability, capital rotation scoring, investment analysis, and economic data',
+    version: '0.2.0',
+    description: 'Market Intelligence MCP — recession probability, sector rotation, institutional positioning, macro cascade scenarios, real estate calculators, and economic data',
   })
 
-  registerRecessionTools(server)
-  registerCapitalRotationTools(server)
+  registerMacroTools(server)
+  registerIndicatorTools(server)
+  registerMarketTools(server)
   registerCalculatorTools(server)
-  registerFredTools(server)
   registerCascadeTools(server)
 
   return server

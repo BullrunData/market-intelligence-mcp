@@ -1,6 +1,6 @@
 # Market Intelligence MCP Server
 
-> Recession probability, capital rotation, macro cascade scenario analysis, investment calculators, and real-time economic data — for Claude, ChatGPT, Cursor, and any MCP client.
+> Recession probability, sector rotation, institutional positioning, macro cascade scenario analysis, real estate calculators, and real-time economic data — for Claude, ChatGPT, Cursor, and any MCP client.
 
 Powered by the [BullrunData API](https://bullrundata.com).
 
@@ -36,26 +36,26 @@ Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/d
 
 ## Available Tools (23)
 
-### Recession Intelligence
+### Macro Intelligence
 
 | Tool | Description |
 |------|-------------|
-| `recession_probability` | Current recession probability (0-95%) from 15-indicator weighted model |
-| `recession_indicators` | All model indicators with scores and values |
-| `fed_stance` | Federal Reserve policy stance and weight impacts |
-| `market_regime` | Market cycle phase (early/mid/late/recession) |
-| `confirmation_status` | 4 coincident indicators confirming or denying signals |
-| `sahm_rule` | Sahm Rule calculation — predicted every recession since 1970 |
+| `dashboard_summary` | One-call macro snapshot — recession probability, regime, Fed stance, 14 key indicators |
+| `recession_probability` | 15-component recession model with full breakdown and confirmation slice |
+| `recession_indicators` | Curated key metrics block (unemployment, CPI, T10Y2Y, VIX, mortgage, etc.) |
+| `fed_stance` | Current Fed monetary policy stance and Fed funds rate |
+| `market_regime` | Market cycle phase (early/mid/late_cycle / recession) |
+| `confirmation_status` | 4 coincident indicators confirming or denying recession signals |
 
-### Capital Rotation
+### Markets & Institutional
 
 | Tool | Description |
 |------|-------------|
-| `capital_rotation_score` | Risk-on/risk-off composite (-100 to +100) from 9 macro instruments |
-| `capital_rotation_instruments` | All instruments with prices, signals, and scores |
-| `divergence_alerts` | Correlation breakdowns and momentum shifts |
+| `sectors_rotation` | Risk-on/risk-off signal from 11 sector ETFs (cyclical vs defensive) with leaders/laggards |
+| `institutional_cftc` | CFTC Commitments of Traders — institutional futures positioning |
+| `institutional_tic` | Treasury International Capital flows — net foreign Treasury demand |
 
-### Investment Calculators
+### Real Estate Calculators
 
 | Tool | Description |
 |------|-------------|
@@ -66,14 +66,14 @@ Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/d
 
 | Tool | Description |
 |------|-------------|
-| `economic_indicator` | Any economic indicator by series ID (GDP, CPI, UNRATE, etc.) |
-| `search_indicators` | Search available indicators by keyword |
-| `interest_rates` | Fed funds, treasury yields, mortgage rates |
-| `inflation_data` | CPI, PCE, breakeven inflation, expectations |
-| `employment_data` | Unemployment, payrolls, claims, JOLTS |
-| `housing_data` | Mortgage rates, starts, permits, home prices |
-| `yield_curve` | Yield spreads and inversion detection |
-| `market_sentiment` | VIX, financial conditions, stress, consumer sentiment |
+| `economic_indicator` | Time series for any tracked indicator (VIXCLS, UNRATE, CPIAUCSL, T10Y2Y, etc.) |
+| `list_indicators` | List all tracked indicators, optionally filtered by category |
+| `interest_rates` | Fed Policy + Interest Rates categories |
+| `inflation_data` | All Inflation-category indicators |
+| `employment_data` | Labor Market category (unemployment, payrolls, claims, JOLTS) |
+| `housing_data` | Housing category (mortgage rates, starts, permits, prices) |
+| `yield_curve` | 10Y-2Y and 10Y-3M spreads with inversion check |
+| `market_sentiment` | Markets + Financial Conditions + Consumer Sentiment |
 
 ### Cascade Engine (Macro Scenario Analysis)
 
@@ -100,13 +100,13 @@ Claude uses `investment_property_analysis` + `interest_rates`:
 
 ### "What's the market risk-on/risk-off signal?"
 
-Claude uses `capital_rotation_score` + `divergence_alerts`:
-> Capital rotation score: -3 (NEUTRAL / MIXED SIGNALS). VIX elevated at 27. Gold catching a fear bid. Copper holding — not a structural breakdown. Playbook: quality and diversification over concentrated bets.
+Claude uses `sectors_rotation` + `institutional_cftc`:
+> Sector rotation signal: RISK_ON. Cyclical sectors leading (XLK +19.7%, XLY +7.2%) vs defensive lagging (XLU -0.5%, XLV -2.6%). Rotation spread +4.4. CFTC institutional positioning: e-mini S&P long, gold short — risk-seeking. Playbook: stay overweight cyclicals, watch for rotation breakdown.
 
 ### "What happens if oil hits $120?"
 
-Claude uses `cascade_analysis` + `capital_rotation_score`:
-> Oil Supply Shock cascade: Dollar demand surges (mechanical) -> Asian FX reserves drain (likely, weeks) -> Asian equity outflows (likely) -> Forced rate hikes in Asia (probable, months). Current capital rotation score: -13 (neutral/mixed). Playbook: inflation hedges (XLE, TIP) and cash reserves. Watch Fed swap line usage for systemic signal.
+Claude uses `cascade_analysis` + `sectors_rotation`:
+> Oil Supply Shock cascade: Dollar demand surges (mechanical) -> Asian FX reserves drain (likely, weeks) -> Asian equity outflows (likely) -> Forced rate hikes in Asia (probable, months). Current sector rotation: RISK_ON, but energy (XLE) lagging at -3.6% suggests market hasn't priced supply risk yet. Playbook: inflation hedges (XLE, TIP) and cash reserves. Watch Fed swap line usage for systemic signal.
 
 ## Configuration
 

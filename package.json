@@ -1,8 +1,8 @@
 {
   "name": "@bullrundata/market-intelligence",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "mcpName": "io.github.jbrand0n/market-intelligence-mcp",
-  "description": "Market Intelligence MCP Server — recession probability, capital rotation scoring, macro cascade scenario analysis, investment calculators, and economic data. Powered by the BullrunData API.",
+  "description": "Market Intelligence MCP Server — recession probability, sector rotation, institutional positioning (CFTC/TIC), macro cascade scenario analysis, real estate calculators, and economic data. Powered by the BullrunData API.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
