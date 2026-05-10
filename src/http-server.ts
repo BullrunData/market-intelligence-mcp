@@ -15,7 +15,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 
 import { registerMacroTools } from './tools/macro.js'
 import { registerIndicatorTools } from './tools/indicators.js'
@@ -135,11 +135,10 @@ app.post('/register', async (c) => {
 
 // ─── MCP Protocol (Streamable HTTP) ────────────────────────────
 
-// Store transports per session
-const transports = new Map<string, StreamableHTTPServerTransport>()
+// Store transports per session (in-memory, per Vercel function instance)
+const transports = new Map<string, WebStandardStreamableHTTPServerTransport>()
 
 function createMcpServer(apiKey?: string): McpServer {
-  // Set the API key in env so tools can use it
   if (apiKey) {
     process.env.BULLRUNDATA_API_KEY = apiKey
   }
@@ -159,8 +158,8 @@ function createMcpServer(apiKey?: string): McpServer {
   return server
 }
 
-app.post('/mcp', async (c) => {
-  // Extract auth token if present
+// Handles GET (SSE), POST (JSON-RPC), DELETE (session close) per MCP spec
+app.all('/mcp', async (c) => {
   const authHeader = c.req.header('Authorization')
   let apiKey: string | undefined
 
@@ -170,18 +169,17 @@ app.post('/mcp', async (c) => {
       const result = await verifyToken(token)
       if (result) apiKey = result.apiKey
     } catch {
-      // Token invalid — continue without API key (tools will fail with 401)
+      // Token invalid — proceed without; tools will fail with 401
     }
   }
 
-  // Get or create transport for this session
   const sessionId = c.req.header('mcp-session-id')
-  let transport: StreamableHTTPServerTransport
+  let transport: WebStandardStreamableHTTPServerTransport
 
   if (sessionId && transports.has(sessionId)) {
     transport = transports.get(sessionId)!
   } else {
-    transport = new StreamableHTTPServerTransport({
+    transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomUUID(),
       onsessioninitialized: (id) => {
         transports.set(id, transport)
@@ -195,36 +193,7 @@ app.post('/mcp', async (c) => {
     await server.connect(transport)
   }
 
-  // Handle the MCP request
-  const body = await c.req.json()
-
-  // Use Node.js compatible handling
-  const nodeReq = {
-    method: 'POST',
-    headers: Object.fromEntries(c.req.raw.headers.entries()),
-    url: '/mcp',
-    auth: apiKey ? { token: authHeader!.slice(7), clientId: '', scopes: [] } : undefined,
-  }
-
-  // We need to use the raw request/response for StreamableHTTP
-  // For Vercel, return the response directly
-  try {
-    await transport.handleRequest(
-      nodeReq as any,
-      {
-        writeHead: (status: number, headers: Record<string, string>) => {
-          // Will be handled by response construction
-        },
-        write: (data: string) => {},
-        end: (data?: string) => {},
-      } as any,
-      body
-    )
-  } catch {
-    // Fallback for transport errors
-  }
-
-  return c.json({ jsonrpc: '2.0', result: {} })
+  return transport.handleRequest(c.req.raw)
 })
 
 // Health check
