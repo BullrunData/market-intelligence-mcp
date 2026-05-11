@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false } as const
+const readOnly = (title: string) => ({ title, readOnlyHint: true, destructiveHint: false } as const)
 
 function monthlyMortgagePayment(principal: number, annualRatePct: number, termYears: number): number {
   if (principal <= 0 || termYears <= 0) return 0
@@ -36,7 +36,7 @@ export function registerCalculatorTools(server: McpServer) {
       propertyMgmtPct: z.number().default(0).describe('Property management as % of rent'),
       closingCostsPct: z.number().default(3).describe('Closing costs percentage'),
     },
-    READ_ONLY,
+    readOnly('Investment Property Analysis'),
     async (input) => {
       const downPayment = input.purchasePrice * (input.downPaymentPct / 100)
       const loanAmount = input.purchasePrice - downPayment
@@ -131,7 +131,7 @@ export function registerCalculatorTools(server: McpServer) {
       useInitialLoan: z.boolean().default(false).describe('Whether initial purchase used a loan'),
       initialLoanAmount: z.number().default(0).describe('Initial loan amount if used'),
     },
-    READ_ONLY,
+    readOnly('BRRRR Deal Analysis'),
     async (input) => {
       const closingCostsBuy = input.purchasePrice * (input.closingCostsBuyPct / 100)
       const allInCost = input.purchasePrice + closingCostsBuy + input.rehabCosts + input.holdingCosts
@@ -174,7 +174,6 @@ export function registerCalculatorTools(server: McpServer) {
       const purchasePlusRehab = input.purchasePrice + input.rehabCosts
       const seventyPctRulePass = purchasePlusRehab <= seventyPctMaxBudget
 
-      // BRRRR Score (0-100)
       const cashLeftPoints = cashLeftInDeal <= 0 ? 30 : cashLeftInDeal <= 5000 ? 25 : cashLeftInDeal <= 15000 ? 20 : cashLeftInDeal <= 30000 ? 10 : 0
       const cashOnCashScore = !Number.isFinite(cashOnCash) ? 25 : cashOnCash >= 15 ? 25 : cashOnCash >= 10 ? 20 : cashOnCash >= 5 ? 15 : cashOnCash > 0 ? 10 : 0
       const dscrScore = !Number.isFinite(dscr) ? 20 : dscr >= 1.5 ? 20 : dscr >= 1.25 ? 15 : dscr >= 1.0 ? 10 : dscr >= 0.9 ? 5 : 0

@@ -122,6 +122,55 @@ Claude uses `cascade_analysis` + `sectors_rotation`:
 | Pro | 10,000 | $29/mo |
 | Business | 100,000 | $99/mo |
 
+## Troubleshooting
+
+### Tools don't appear in Claude after install
+
+1. Confirm the MCP server is registered: in Claude Desktop, check **Settings → Connectors** (or **Developer**) for `market-intelligence`. In Claude Code, run `claude mcp list`.
+2. Restart Claude Desktop fully (quit, not just close window) — connector changes don't hot-reload.
+3. Verify your `BULLRUNDATA_API_KEY` env var is set and valid. Without it, tools fail at first call.
+4. If using the remote server (`https://market.bullrundata.com/mcp`) directly, complete the OAuth flow in your browser when prompted — Claude needs the bearer token before it can call tools.
+
+### `401 Unauthorized` from a tool
+
+Your API key is missing, expired, or inactive. Get a fresh one at [bullrundata.com/login](https://bullrundata.com/login). For the remote server flow, re-authenticate via the OAuth screen; the connector auto-provisions a free-tier key on first connect.
+
+### `429 Too Many Requests`
+
+You hit your daily rate limit. Limits reset at 00:00 UTC.
+
+| Tier | Limit |
+|------|-------|
+| Free | 100 requests/day |
+| Pro | 10,000 requests/day |
+| Business | 100,000 requests/day |
+
+Upgrade at [bullrundata.com/pricing](https://bullrundata.com) or wait for the UTC reset.
+
+### OAuth flow stuck or times out (remote server)
+
+The remote server uses GitHub OAuth. If the redirect hangs:
+
+1. Confirm cookies and pop-ups are allowed for `market.bullrundata.com` and `claude.ai`
+2. Try authorizing in an incognito window (clears cached OAuth state)
+3. Check that `https://market.bullrundata.com/.well-known/oauth-authorization-server` returns 200 in your browser
+
+### First request is slow (~2–4 seconds)
+
+Vercel cold-start latency on the serverless function. Subsequent requests in the same session should respond in <500ms.
+
+### `cascade_analysis` returns "live data unavailable"
+
+The cascade tool optionally enriches with live BullrunData market data. If the upstream API is briefly unreachable, you'll still get the full catalyst tree — only the live overlay is skipped. Pass `include_live_data: false` to skip the live fetch entirely.
+
+### Tool returns stale data
+
+Most economic indicators refresh on FRED's release schedule (daily for Treasury rates and equity indicators; monthly for CPI, employment, housing). Check `data_freshness` in `dashboard_summary` for the last refresh timestamp.
+
+### Still stuck
+
+Open an issue at [GitHub Issues](https://github.com/BullrunData/market-intelligence-mcp/issues) or email [support@bullrundata.com](mailto:support@bullrundata.com) with: tool name, full error message, and approximate timestamp.
+
 ## Support
 
 - Website: [bullrundata.com](https://bullrundata.com)

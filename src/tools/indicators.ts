@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { apiGet } from '../lib/api-client.js'
 
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false } as const
+const readOnly = (title: string) => ({ title, readOnlyHint: true, destructiveHint: false } as const)
 
 interface IndicatorRow {
   indicator: string
@@ -28,7 +28,7 @@ export function registerIndicatorTools(server: McpServer) {
       limit: z.number().default(30).describe('Number of observations to return (default 30)'),
       start_date: z.string().optional().describe('Start date (YYYY-MM-DD)'),
     },
-    READ_ONLY,
+    readOnly('Economic Indicator Time Series'),
     async ({ series_id, limit, start_date }) => {
       const params = new URLSearchParams()
       params.set('limit', String(limit))
@@ -44,7 +44,7 @@ export function registerIndicatorTools(server: McpServer) {
     {
       category: z.string().optional().describe('Optional category filter (e.g., "Inflation", "Labor Market", "Housing")'),
     },
-    READ_ONLY,
+    readOnly('List All Indicators'),
     async ({ category }) => {
       const path = category
         ? `/api/v1/indicators?category=${encodeURIComponent(category)}`
@@ -58,7 +58,7 @@ export function registerIndicatorTools(server: McpServer) {
     'interest_rates',
     'Current interest rates: Fed funds rate and all tracked Treasury / mortgage rate indicators.',
     {},
-    READ_ONLY,
+    readOnly('Interest Rates'),
     async () => {
       const [fedPolicy, rates] = await Promise.all([
         getByCategory('Fed Policy'),
@@ -77,7 +77,7 @@ export function registerIndicatorTools(server: McpServer) {
     'inflation_data',
     'Current inflation indicators (CPI, Core CPI, PCE, etc — all entries in the Inflation category).',
     {},
-    READ_ONLY,
+    readOnly('Inflation Data'),
     async () => {
       const data = await getByCategory('Inflation')
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -88,7 +88,7 @@ export function registerIndicatorTools(server: McpServer) {
     'employment_data',
     'Current labor market indicators (unemployment rate, nonfarm payrolls, initial claims, JOLTS, participation, average hourly earnings).',
     {},
-    READ_ONLY,
+    readOnly('Employment Data'),
     async () => {
       const data = await getByCategory('Labor Market')
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -99,7 +99,7 @@ export function registerIndicatorTools(server: McpServer) {
     'housing_data',
     'Current housing market indicators (mortgage rates, housing starts, building permits, sales prices, Case-Shiller).',
     {},
-    READ_ONLY,
+    readOnly('Housing Data'),
     async () => {
       const data = await getByCategory('Housing')
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -110,7 +110,7 @@ export function registerIndicatorTools(server: McpServer) {
     'yield_curve',
     'Yield curve snapshot: 10Y-2Y and 10Y-3M Treasury spreads with inversion check.',
     {},
-    READ_ONLY,
+    readOnly('Yield Curve Spreads'),
     async () => {
       const [t2, t3m] = await Promise.all([
         apiGet('/api/v1/indicators/T10Y2Y').catch(() => null),
@@ -139,7 +139,7 @@ export function registerIndicatorTools(server: McpServer) {
     'market_sentiment',
     'Market sentiment indicators (VIX, Financial Conditions Index, Consumer Sentiment, financial-stress measures).',
     {},
-    READ_ONLY,
+    readOnly('Market Sentiment'),
     async () => {
       const [markets, financial] = await Promise.all([
         getByCategory('Markets'),

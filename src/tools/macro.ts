@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { apiGet } from '../lib/api-client.js'
 
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false } as const
+const readOnly = (title: string) => ({ title, readOnlyHint: true, destructiveHint: false } as const)
 
 interface ModelProbability {
   probability: number
@@ -50,7 +50,7 @@ export function registerMacroTools(server: McpServer) {
     'dashboard_summary',
     'One-call macro snapshot — recession probability, market regime, Fed stance, and 14 key economic indicators (unemployment, Fed funds, CPI, yield curve spreads, VIX, high-yield spread, consumer sentiment, mortgage rate, housing starts, jobless claims, financial conditions, M2, industrial production). Best starting point for any macro question.',
     {},
-    READ_ONLY,
+    readOnly('Macro Dashboard Summary'),
     async () => {
       const data = await apiGet('/api/v1/dashboard/summary')
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -61,7 +61,7 @@ export function registerMacroTools(server: McpServer) {
     'recession_probability',
     'Current US recession probability (0-100%) from a 15-component leading indicator model. Returns probability, trend (early/mid/late_cycle/recession), confidence, full component breakdown (yield curves, credit spreads, unemployment trend, JOLTS quits, ISM, consumer sentiment, housing, VIX, M2, financial conditions), 4-indicator confirmation slice, Fed stance, and recommendation.',
     {},
-    READ_ONLY,
+    readOnly('Recession Probability Score'),
     async () => {
       const data = await apiGet('/api/v1/model/probability')
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
@@ -72,7 +72,7 @@ export function registerMacroTools(server: McpServer) {
     'recession_indicators',
     'Latest values for all key recession-model indicators with labels and units. Returns the curated key_metrics block from the dashboard summary (unemployment, Fed funds, CPI, T10Y2Y, T10Y3M, VIX, high-yield spread, consumer sentiment, mortgage rate, housing starts, jobless claims, financial conditions, M2, industrial production).',
     {},
-    READ_ONLY,
+    readOnly('Recession Indicators'),
     async () => {
       const data = (await apiGet('/api/v1/dashboard/summary')) as DashboardSummary
       return {
@@ -92,7 +92,7 @@ export function registerMacroTools(server: McpServer) {
     'fed_stance',
     'Current Federal Reserve monetary policy stance (TIGHTENING, EASING, NEUTRAL, CRISIS) with the live Fed funds rate.',
     {},
-    READ_ONLY,
+    readOnly('Federal Reserve Stance'),
     async () => {
       const data = (await apiGet('/api/v1/model/probability')) as ModelProbability
       return {
@@ -112,7 +112,7 @@ export function registerMacroTools(server: McpServer) {
     'market_regime',
     'Current market cycle phase (early_cycle, mid_cycle, late_cycle, recession) inferred from the recession model trend.',
     {},
-    READ_ONLY,
+    readOnly('Market Cycle Regime'),
     async () => {
       const data = (await apiGet('/api/v1/model/probability')) as ModelProbability
       return {
@@ -133,7 +133,7 @@ export function registerMacroTools(server: McpServer) {
     'confirmation_status',
     'Coincident-indicator confirmation slice from the recession model. Tracks Real GDP Growth, Industrial Production, Real Personal Income, and Employment Level against thresholds. Tells you whether leading-indicator recession signals are being confirmed by current activity.',
     {},
-    READ_ONLY,
+    readOnly('Recession Confirmation Status'),
     async () => {
       const data = (await apiGet('/api/v1/model/probability')) as ModelProbability
       return {

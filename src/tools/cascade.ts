@@ -10,21 +10,16 @@ import {
   type CascadeEffect,
 } from '../data/catalyst-trees.js'
 
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false } as const
+const readOnly = (title: string) => ({ title, readOnlyHint: true, destructiveHint: false } as const)
 
-/**
- * Enrich a catalyst tree's watchlist with live data from BullrunData API
- */
 async function enrichWithLiveData(tree: CatalystTree): Promise<Record<string, unknown>> {
   const liveData: Record<string, unknown> = {}
 
-  // Collect unique MCP tools referenced in watchlist
   const toolsToFetch = new Set<string>()
   for (const item of tree.watchlist) {
     if (item.mcpTool) toolsToFetch.add(item.mcpTool)
   }
 
-  // Fetch live data in parallel
   const toolMap: Record<string, string> = {
     sectors_rotation: '/api/v1/sectors/rotation',
     institutional_cftc: '/api/v1/institutional/cftc',
@@ -55,9 +50,6 @@ async function enrichWithLiveData(tree: CatalystTree): Promise<Record<string, un
   return liveData
 }
 
-/**
- * Flatten a cascade tree into a readable chain for text output
- */
 function formatCascadeChain(effects: CascadeEffect[], depth = 0): string {
   const lines: string[] = []
   const indent = '  '.repeat(depth)
@@ -69,7 +61,7 @@ function formatCascadeChain(effects: CascadeEffect[], depth = 0): string {
 
     if (effect.assetImpacts.length > 0) {
       const assets = effect.assetImpacts
-        .map((a) => `${a.asset} ${a.direction === 'up' ? '\u2191' : a.direction === 'down' ? '\u2193' : '\u2195'}${a.magnitude}`)
+        .map((a) => `${a.asset} ${a.direction === 'up' ? '↑' : a.direction === 'down' ? '↓' : '↕'}${a.magnitude}`)
         .join(', ')
       lines.push(`${indent}  Assets: ${assets}`)
     }
@@ -90,12 +82,11 @@ function formatCascadeChain(effects: CascadeEffect[], depth = 0): string {
 }
 
 export function registerCascadeTools(server: McpServer) {
-  // ─── List all available catalysts ─────────────────────────
   server.tool(
     'cascade_list',
     'List all available macro catalyst scenarios in the Cascade Engine. Returns catalyst IDs, names, categories, and severity levels. Use a catalyst ID with cascade_analysis for the full chain reaction.',
     {},
-    READ_ONLY,
+    readOnly('List Cascade Scenarios'),
     async () => {
       const catalysts = listCatalysts()
       return {
@@ -111,7 +102,6 @@ export function registerCascadeTools(server: McpServer) {
     },
   )
 
-  // ─── Full cascade analysis for a catalyst ─────────────────
   server.tool(
     'cascade_analysis',
     'Get the full chain reaction cascade for a macro catalyst scenario. Maps cause-effect chains across markets, regions, and asset classes with confidence levels, historical precedents, and live market data enrichment. Use cascade_list to see available catalysts.',
@@ -123,7 +113,7 @@ export function registerCascadeTools(server: McpServer) {
         'Whether to enrich the cascade with live market data from BullrunData API (default: true)'
       ),
     },
-    READ_ONLY,
+    readOnly('Cascade Scenario Analysis'),
     async ({ catalyst_id, include_live_data }) => {
       const tree = getCatalystById(catalyst_id)
       if (!tree) {
@@ -139,7 +129,6 @@ export function registerCascadeTools(server: McpServer) {
         }
       }
 
-      // Optionally enrich with live data
       let liveData: Record<string, unknown> = {}
       if (include_live_data) {
         try {
@@ -162,7 +151,6 @@ export function registerCascadeTools(server: McpServer) {
     },
   )
 
-  // ─── Search catalysts by keyword ──────────────────────────
   server.tool(
     'cascade_search',
     'Search catalyst scenarios by keyword. Matches against catalyst names, descriptions, categories, and trigger conditions. Use this when you\'re not sure which catalyst applies to a given situation.',
@@ -171,7 +159,7 @@ export function registerCascadeTools(server: McpServer) {
         'Search query — e.g., "oil", "dollar", "china", "recession", "credit", "currency"'
       ),
     },
-    READ_ONLY,
+    readOnly('Search Cascade Scenarios'),
     async ({ query }) => {
       const results = searchCatalysts(query)
       return {
@@ -194,7 +182,6 @@ export function registerCascadeTools(server: McpServer) {
     },
   )
 
-  // ─── Get catalysts by category ────────────────────────────
   server.tool(
     'cascade_by_category',
     'Get all catalyst scenarios in a specific category. Categories: geopolitical, monetary, credit, commodity, currency, contagion, structural.',
@@ -203,7 +190,7 @@ export function registerCascadeTools(server: McpServer) {
         'The category to filter by'
       ),
     },
-    READ_ONLY,
+    readOnly('Cascade Scenarios by Category'),
     async ({ category }) => {
       const results = getCatalystsByCategory(category)
       return {
