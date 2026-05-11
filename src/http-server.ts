@@ -197,12 +197,12 @@ app.all('/mcp', async (c) => {
 })
 
 // Health check
-app.get('/health', (c) => c.json({ status: 'ok', service: 'market-intelligence-mcp', version: '0.1.2' }))
+app.get('/health', (c) => c.json({ status: 'ok', service: 'market-intelligence-mcp', version: '0.2.0' }))
 
 // Info
 app.get('/', (c) => c.json({
   name: 'BullrunData Market Intelligence MCP',
-  version: '0.1.2',
+  version: '0.2.0',
   transport: 'streamable-http',
   mcp_endpoint: `${MCP_BASE_URL}/mcp`,
   oauth: `${MCP_BASE_URL}/.well-known/oauth-authorization-server`,
