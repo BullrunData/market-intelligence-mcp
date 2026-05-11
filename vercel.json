@@ -3,6 +3,9 @@
   "outputDirectory": ".",
   "framework": null,
   "rewrites": [
+    { "source": "/favicon.svg", "destination": "/public/favicon.svg" },
+    { "source": "/favicon.ico", "destination": "/public/favicon.ico" },
+    { "source": "/apple-touch-icon.png", "destination": "/public/apple-touch-icon.png" },
     { "source": "/(.*)", "destination": "/api/index" }
   ]
 }
