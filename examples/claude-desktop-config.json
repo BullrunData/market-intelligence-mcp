@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "market-intelligence": {
+      "command": "npx",
+      "args": ["-y", "@bullrundata/market-intelligence"],
+      "env": {
+        "BULLRUNDATA_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
