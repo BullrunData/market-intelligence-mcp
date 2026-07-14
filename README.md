@@ -4,11 +4,99 @@
 
 Powered by the [BullrunData API](https://bullrundata.com).
 
-## Quick Start
+## Quick Start (hosted — recommended)
+
+The hosted endpoint at `https://bullrundata.com/api/mcp` is the fastest path. No install, auto-updates, and every MCP client below supports it natively.
+
+Get a free API key at [bullrundata.com](https://bullrundata.com/login) — 100 calls/day, no credit card.
+
+### Claude Code
+
+```bash
+claude mcp add --transport http bullrundata https://bullrundata.com/api/mcp --header "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Cursor
+
+Add to `~/.cursor/mcp.json` (or the project-local `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "bullrundata": {
+      "url": "https://bullrundata.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### VS Code
+
+Add to `.vscode/mcp.json` (workspace) or your user `mcp.json`:
+
+```json
+{
+  "servers": {
+    "bullrundata": {
+      "type": "http",
+      "url": "https://bullrundata.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bullrundata": {
+      "serverUrl": "https://bullrundata.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
 
 ### Claude Desktop
 
-Add to your `claude_desktop_config.json`:
+Claude Desktop doesn't speak HTTP MCP natively yet — bridge via [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bullrundata": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://bullrundata.com/api/mcp",
+        "--header",
+        "Authorization: Bearer YOUR_API_KEY"
+      ]
+    }
+  }
+}
+```
+
+You can also skip the header entirely — on first connect, `mcp-remote` opens an OAuth flow in your browser and auto-provisions a free-tier key.
+
+<details>
+<summary><strong>Local install (npm)</strong></summary>
+
+If you'd rather run the server locally (e.g. air-gapped environments, custom auth), install via npm:
+
+**Claude Desktop:**
 
 ```json
 {
@@ -24,15 +112,15 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-### Claude Code
+**Claude Code:**
 
 ```bash
 claude mcp add market-intelligence -- npx -y @bullrundata/market-intelligence
 ```
 
-### Get Your API Key
+Set `BULLRUNDATA_API_KEY` in the environment where the command runs.
 
-Sign up free at [bullrundata.com](https://bullrundata.com/login) — 100 calls/day, no credit card required.
+</details>
 
 ## Available Tools
 
@@ -112,6 +200,10 @@ Claude uses `cascade_analysis` + `sectors_rotation`:
 > Oil Supply Shock cascade: Dollar demand surges (mechanical) -> Asian FX reserves drain (likely, weeks) -> Asian equity outflows (likely) -> Forced rate hikes in Asia (probable, months). Current sector rotation: RISK_ON, but energy sector lagging suggests market hasn't priced supply risk yet. Playbook: inflation hedges and cash reserves. Watch Fed swap line usage for systemic signal.
 
 ## Configuration
+
+For the hosted endpoint, authentication is passed as a Bearer header in your client config (see Quick Start above) or negotiated via OAuth on first connect — no environment variables needed.
+
+For the local `npx` install:
 
 | Environment Variable | Required | Description |
 |---------------------|----------|-------------|
