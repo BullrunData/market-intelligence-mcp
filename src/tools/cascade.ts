@@ -104,13 +104,13 @@ export function registerCascadeTools(server: McpServer) {
 
   server.tool(
     'cascade_analysis',
-    'Get the full chain reaction cascade for a macro catalyst scenario. Maps cause-effect chains across markets, regions, and asset classes with confidence levels, historical precedents, and live market data enrichment. Use cascade_list to see available catalysts.',
+    'Get the full chain reaction cascade for a macro catalyst scenario. Maps cause-effect chains across markets, regions, and asset classes with confidence levels and historical precedents. Live market-data enrichment (include_live_data=true) reads from the recession-model endpoint which requires Pro tier — free tier callers get the cascade tree without enrichment. Use cascade_list to see available catalysts.',
     {
       catalyst_id: z.string().describe(
         'The catalyst ID to analyze. Use cascade_list to see available IDs. Examples: "oil-supply-shock", "dollar-liquidity-squeeze", "fed-emergency-rate-cut", "us-recession-confirmed", "china-taiwan-escalation", "yield-curve-inversion", "credit-market-freeze", "em-currency-crisis", "trade-war-escalation", "sovereign-debt-crisis"'
       ),
       include_live_data: z.boolean().optional().default(true).describe(
-        'Whether to enrich the cascade with live market data from BullrunData API (default: true)'
+        'Whether to enrich the cascade with live market data from BullrunData API (default: true). Enrichment requires Pro tier — will return an upgrade prompt in live_market_data.error for free-tier callers.'
       ),
     },
     readOnly('Cascade Scenario Analysis'),
@@ -133,8 +133,12 @@ export function registerCascadeTools(server: McpServer) {
       if (include_live_data) {
         try {
           liveData = await enrichWithLiveData(tree)
-        } catch {
-          liveData = { error: 'Unable to fetch live market data' }
+        } catch (e) {
+          // Surface the actual error text (includes 403 upgrade CTA + pricing URL
+          // when free tier hits a paid endpoint) so Claude can show the upgrade
+          // prompt instead of the swallowed generic message.
+          const msg = e instanceof Error ? e.message : String(e)
+          liveData = { error: msg }
         }
       }
 

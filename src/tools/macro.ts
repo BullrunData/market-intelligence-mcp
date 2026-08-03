@@ -48,7 +48,7 @@ interface DashboardSummary {
 export function registerMacroTools(server: McpServer) {
   server.tool(
     'dashboard_summary',
-    'One-call macro snapshot — recession probability, market regime, Fed stance, and a curated block of key economic indicators. Best starting point for any macro question.',
+    'One-call macro snapshot with a curated block of key economic indicators. Best starting point for any macro question. Free tier sees indicators + counts; recession probability, market regime, and Fed stance blocks return a Pro-upgrade placeholder — upgrade at https://bullrundata.com/pricing for the full composite.',
     {},
     readOnly('Macro Dashboard Summary'),
     async () => {
@@ -59,7 +59,7 @@ export function registerMacroTools(server: McpServer) {
 
   server.tool(
     'recession_probability',
-    'Current US recession probability (0-100%) from a proprietary weighted model. Returns probability, trend (early/mid/late_cycle/recession), confidence, confirmation layer, Fed stance, and recommendation.',
+    'Requires Pro tier. Current US recession probability (0-100%) from a proprietary weighted model. Returns probability, trend (early/mid/late_cycle/recession), confidence, confirmation layer, Fed stance, and recommendation. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
     {},
     readOnly('Recession Probability Score'),
     async () => {
@@ -90,7 +90,7 @@ export function registerMacroTools(server: McpServer) {
 
   server.tool(
     'fed_stance',
-    'Current Federal Reserve monetary policy stance (TIGHTENING, EASING, NEUTRAL, CRISIS) with the live Fed funds rate.',
+    'Requires Pro tier. Current Federal Reserve monetary policy stance (TIGHTENING, EASING, NEUTRAL, CRISIS) with the live Fed funds rate. Sourced from the recession-model composite endpoint. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
     {},
     readOnly('Federal Reserve Stance'),
     async () => {
@@ -110,7 +110,7 @@ export function registerMacroTools(server: McpServer) {
 
   server.tool(
     'market_regime',
-    'Current market cycle phase (early_cycle, mid_cycle, late_cycle, recession) inferred from the recession model trend.',
+    'Requires Pro tier. Current market cycle phase (early_cycle, mid_cycle, late_cycle, recession) inferred from the recession model trend. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
     {},
     readOnly('Market Cycle Regime'),
     async () => {
@@ -131,7 +131,7 @@ export function registerMacroTools(server: McpServer) {
 
   server.tool(
     'confirmation_status',
-    'Coincident-indicator confirmation slice from the recession model. Tells you whether leading-indicator recession signals are being confirmed by current activity.',
+    'Requires Pro tier. Coincident-indicator confirmation slice from the recession model. Tells you whether leading-indicator recession signals are being confirmed by current activity. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
     {},
     readOnly('Recession Confirmation Status'),
     async () => {
