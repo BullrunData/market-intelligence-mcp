@@ -147,4 +147,15 @@ export function registerMacroTools(server: McpServer) {
       }
     },
   )
+
+  server.tool(
+    'housing_cycle',
+    'Requires Pro tier. US housing market cycle classifier — expansion / topping / mid_cycle / bottoming / contraction — from a proprietary weighted model over 5 component groups (supply, demand, price, affordability, cost of capital). Returns composite score 0-100, per-component sub-scores with interpretations, 3-month trend, and confidence. Best used for real estate timing decisions and macro housing analysis. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('US Housing Cycle Regime'),
+    async () => {
+      const data = await apiGet('/api/v1/model/housing')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
 }
