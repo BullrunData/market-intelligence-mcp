@@ -22,18 +22,24 @@ async function getByCategory(category: string): Promise<IndicatorRow[]> {
 export function registerIndicatorTools(server: McpServer) {
   server.tool(
     'economic_indicator',
-    'Time series for any tracked economic indicator by series ID (e.g., VIXCLS, UNRATE, CPIAUCSL, T10Y2Y, MORTGAGE30US, BAMLH0A0HYM2). Returns daily date+value pairs over the requested range.',
+    'Time series for any tracked economic indicator by series ID (e.g., VIXCLS, UNRATE, CPIAUCSL, T10Y2Y, MORTGAGE30US, BAMLH0A0HYM2). Returns date+value pairs. Use start_date + end_date for explicit period-over-period comparisons; falls back to `range` for trailing windows.',
     {
       series_id: z.string().describe('Series ID (e.g., VIXCLS, UNRATE, DFF, CPIAUCSL, T10Y2Y, MORTGAGE30US)'),
-      limit: z.number().default(30).describe('Number of observations to return (default 30)'),
-      start_date: z.string().optional().describe('Start date (YYYY-MM-DD)'),
+      limit: z.number().optional().describe('Optional cap on observations returned (1-5000, most recent kept). Omit for full range.'),
+      start_date: z.string().optional().describe('Start date YYYY-MM-DD. When provided, overrides `range`.'),
+      end_date: z.string().optional().describe('End date YYYY-MM-DD. Defaults to today when start_date is set.'),
+      range: z.string().optional().describe('Trailing window: 1m, 3m, 6m, 1y, 2y, 5y, max. Used only when start_date is omitted. Default: 1y.'),
     },
     readOnly('Economic Indicator Time Series'),
-    async ({ series_id, limit, start_date }) => {
+    async ({ series_id, limit, start_date, end_date, range }) => {
       const params = new URLSearchParams()
-      params.set('limit', String(limit))
+      if (limit !== undefined) params.set('limit', String(limit))
       if (start_date) params.set('start_date', start_date)
-      const data = await apiGet(`/api/v1/indicators/${encodeURIComponent(series_id)}/timeseries?${params.toString()}`)
+      if (end_date) params.set('end_date', end_date)
+      if (range) params.set('range', range)
+      const qs = params.toString()
+      const path = `/api/v1/indicators/${encodeURIComponent(series_id)}/timeseries${qs ? '?' + qs : ''}`
+      const data = await apiGet(path)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
