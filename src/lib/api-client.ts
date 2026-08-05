@@ -4,12 +4,11 @@
  */
 
 const API_BASE = process.env.BULLRUNDATA_API_URL || 'https://api.bullrundata.com'
-const API_KEY = process.env.BULLRUNDATA_API_KEY || ''
 
 export async function apiGet(path: string): Promise<unknown> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
-      'X-API-Key': API_KEY,
+      'X-API-Key': process.env.BULLRUNDATA_API_KEY || '',
       'Accept': 'application/json',
     },
   })
@@ -42,7 +41,7 @@ export async function apiPost(path: string, body: unknown): Promise<unknown> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: {
-      'X-API-Key': API_KEY,
+      'X-API-Key': process.env.BULLRUNDATA_API_KEY || '',
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
