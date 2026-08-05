@@ -14,8 +14,9 @@ interface IndicatorRow {
   changePercent: number | null
 }
 
-async function getByCategory(category: string): Promise<IndicatorRow[]> {
-  const data = (await apiGet(`/api/v1/indicators?category=${encodeURIComponent(category)}`)) as IndicatorRow[]
+async function getByCategory(category: string, includeChange = false): Promise<IndicatorRow[]> {
+  const suffix = includeChange ? '&include_change=true' : ''
+  const data = (await apiGet(`/api/v1/indicators?category=${encodeURIComponent(category)}${suffix}`)) as IndicatorRow[]
   return data
 }
 
@@ -62,13 +63,13 @@ export function registerIndicatorTools(server: McpServer) {
 
   server.tool(
     'interest_rates',
-    'Current interest rates: Fed funds rate and all tracked Treasury / mortgage rate indicators.',
+    'Current interest rates with weekly momentum: Fed funds rate and all tracked Treasury / mortgage rate indicators. Each entry includes `change` and `changePercent` vs last week so trend is visible inline (no need to call economic_indicator for a series-level trend check).',
     {},
     readOnly('Interest Rates'),
     async () => {
       const [fedPolicy, rates] = await Promise.all([
-        getByCategory('Fed Policy'),
-        getByCategory('Interest Rates'),
+        getByCategory('Fed Policy', true),
+        getByCategory('Interest Rates', true),
       ])
       return {
         content: [{
@@ -81,33 +82,33 @@ export function registerIndicatorTools(server: McpServer) {
 
   server.tool(
     'inflation_data',
-    'Current inflation indicators (CPI, Core CPI, PCE, etc — all entries in the Inflation category).',
+    'Current inflation indicators (CPI, Core CPI, PCE, etc — all entries in the Inflation category) with weekly momentum for each.',
     {},
     readOnly('Inflation Data'),
     async () => {
-      const data = await getByCategory('Inflation')
+      const data = await getByCategory('Inflation', true)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
 
   server.tool(
     'employment_data',
-    'Current labor market indicators (unemployment rate, nonfarm payrolls, initial claims, JOLTS, participation, average hourly earnings).',
+    'Current labor market indicators (unemployment rate, nonfarm payrolls, initial claims, JOLTS, participation, average hourly earnings) with weekly momentum for each.',
     {},
     readOnly('Employment Data'),
     async () => {
-      const data = await getByCategory('Labor Market')
+      const data = await getByCategory('Labor Market', true)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
 
   server.tool(
     'housing_data',
-    'Current housing market indicators (mortgage rates, housing starts, building permits, sales prices, Case-Shiller).',
+    'Current housing market indicators (mortgage rates, housing starts, building permits, sales prices, Case-Shiller) with weekly momentum. Each entry includes `change` and `changePercent` vs last week so trend is visible inline.',
     {},
     readOnly('Housing Data'),
     async () => {
-      const data = await getByCategory('Housing')
+      const data = await getByCategory('Housing', true)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
