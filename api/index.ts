@@ -14,7 +14,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let body: string | undefined
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE') {
-    body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body)
+    if (typeof req.body === 'string') {
+      body = req.body
+    } else if (req.body != null) {
+      const contentType = String(req.headers['content-type'] || '').toLowerCase()
+      if (contentType.includes('application/x-www-form-urlencoded') && typeof req.body === 'object') {
+        body = new URLSearchParams(req.body as Record<string, string>).toString()
+      } else {
+        body = JSON.stringify(req.body)
+      }
+    }
   }
 
   const request = new Request(url.toString(), {
