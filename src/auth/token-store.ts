@@ -108,8 +108,8 @@ export async function createApiKeyForUser(email: string): Promise<string> {
   const db = sql()
   const key = 'brd_' + crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 16)
   await db`
-    INSERT INTO api_keys (key, name, tier, email, daily_limit)
-    VALUES (${key}, ${email + ' (OAuth)'}, 'free', ${email}, 100)
+    INSERT INTO api_keys (key, name, tier, email, daily_limit, signup_source)
+    VALUES (${key}, ${email}, 'free', ${email}, 100, 'mcp_oauth')
   `
   return key
 }
