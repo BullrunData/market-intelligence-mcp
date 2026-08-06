@@ -3,6 +3,8 @@
  */
 
 import { neon } from '@neondatabase/serverless'
+import crypto from 'crypto'
+import { verifyPkceChallenge } from './oauth-security.js'
 
 const DATABASE_URL = process.env.DATABASE_URL || ''
 
@@ -24,7 +26,7 @@ export async function storeAuthorizationCode(
   `
 }
 
-export async function exchangeCode(code: string): Promise<{
+export async function exchangeCode(code: string, codeVerifier?: string | null): Promise<{
   accessToken: string
   refreshToken: string
   apiKey: string
@@ -37,13 +39,22 @@ export async function exchangeCode(code: string): Promise<{
   `
   if (rows.length === 0) return null
 
+  // PKCE gate (RFC 7636). If a code_challenge was stored at authorization
+  // time, the token exchange MUST present a matching code_verifier. Skipping
+  // this check turns PKCE into decoration and lets attackers redeem
+  // intercepted auth codes without the verifier.
+  const storedChallenge = rows[0].code_challenge as string | null
+  if (storedChallenge) {
+    if (!codeVerifier || !verifyPkceChallenge(codeVerifier, storedChallenge)) {
+      return null
+    }
+  }
+
   const apiKey = rows[0].api_key as string
 
-  // Generate tokens
   const accessToken = 'brd_at_' + crypto.randomUUID().replace(/-/g, '')
   const refreshToken = 'brd_rt_' + crypto.randomUUID().replace(/-/g, '')
 
-  // Update the row with real tokens
   await db`
     UPDATE oauth_tokens
     SET access_token = ${accessToken},

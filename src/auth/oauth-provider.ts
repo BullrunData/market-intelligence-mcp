@@ -23,6 +23,7 @@ import {
   lookupUserApiKey,
   createApiKeyForUser,
 } from './token-store.js'
+import { signState, verifyState, isValidRedirectUri } from './oauth-security.js'
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || ''
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || ''
@@ -72,8 +73,16 @@ export class BullrunOAuthProvider implements OAuthServerProvider {
     params: { redirectUri: string; codeChallenge?: string; state?: string; scopes?: string[] },
     res: Response
   ): Promise<void> {
-    // Store the pending auth request state, then redirect to GitHub
-    const state = JSON.stringify({
+    // Refuse to hand off to GitHub if redirect_uri is malformed or points at
+    // a non-http(s) scheme — otherwise the callback echoes the code to
+    // whatever URI we're told, including javascript:/data:/file:.
+    if (!isValidRedirectUri(params.redirectUri)) {
+      throw new Error('invalid_request: invalid redirect_uri')
+    }
+
+    // HMAC-signed state binds this authorization to us; verifyState in
+    // the callback rejects tampered payloads pointing at attacker clientId.
+    const state = signState({
       clientId: client.client_id,
       redirectUri: params.redirectUri,
       codeChallenge: params.codeChallenge,
@@ -84,7 +93,7 @@ export class BullrunOAuthProvider implements OAuthServerProvider {
     githubAuthUrl.searchParams.set('client_id', GITHUB_CLIENT_ID)
     githubAuthUrl.searchParams.set('redirect_uri', `${MCP_BASE_URL}/github/callback`)
     githubAuthUrl.searchParams.set('scope', 'user:email')
-    githubAuthUrl.searchParams.set('state', Buffer.from(state).toString('base64url'))
+    githubAuthUrl.searchParams.set('state', state)
 
     // The SDK expects us to handle the redirect via the Response object
     // But since we're using Hono, we'll handle this differently in http-server.ts
@@ -101,10 +110,12 @@ export class BullrunOAuthProvider implements OAuthServerProvider {
   async exchangeAuthorizationCode(
     _client: OAuthClientInformationFull,
     authorizationCode: string,
-    _codeVerifier?: string,
+    codeVerifier?: string,
     _redirectUri?: string
   ): Promise<OAuthTokens> {
-    const result = await exchangeCode(authorizationCode)
+    // exchangeCode enforces PKCE — returns null if code_challenge was
+    // stored at /authorize but verifier is missing or doesn't match.
+    const result = await exchangeCode(authorizationCode, codeVerifier)
     if (!result) throw new Error('Invalid authorization code')
 
     return {
@@ -145,11 +156,26 @@ export class RedirectError extends Error {
 
 // ─── GitHub OAuth Helpers ──────────────────────────────────────
 
-export async function handleGitHubCallback(code: string, stateB64: string): Promise<{
+export async function handleGitHubCallback(code: string, signedState: string): Promise<{
   authorizationCode: string
   redirectUri: string
   originalState?: string
 }> {
+  // Verify state signature FIRST — before any GitHub round-trip. Rejects
+  // forged states pointing at attacker-controlled clientId / redirectUri.
+  const state = verifyState(signedState)
+  if (!state) throw new Error('invalid_state')
+
+  const redirectUri = typeof state.redirectUri === 'string' ? state.redirectUri : ''
+  // Belt-and-suspenders: re-validate the redirect_uri scheme. Cheap guard
+  // against a valid signature captured earlier being replayed with an
+  // updated redirect target.
+  if (!isValidRedirectUri(redirectUri)) throw new Error('invalid_redirect_uri')
+
+  const clientId = typeof state.clientId === 'string' ? state.clientId : ''
+  const codeChallenge = typeof state.codeChallenge === 'string' ? state.codeChallenge : undefined
+  const originalState = typeof state.originalState === 'string' ? state.originalState : undefined
+
   // Exchange GitHub code for access token
   const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
@@ -177,24 +203,15 @@ export async function handleGitHubCallback(code: string, stateB64: string): Prom
     apiKey = await createApiKeyForUser(primaryEmail)
   }
 
-  // Parse state
-  const state = JSON.parse(Buffer.from(stateB64, 'base64url').toString())
-
   // Generate authorization code
   const authCode = 'authcode_' + crypto.randomUUID().replace(/-/g, '')
 
   // Store the code → API key mapping
-  await storeAuthorizationCode(
-    authCode,
-    apiKey,
-    state.clientId,
-    state.redirectUri,
-    state.codeChallenge
-  )
+  await storeAuthorizationCode(authCode, apiKey, clientId, redirectUri, codeChallenge)
 
   return {
     authorizationCode: authCode,
-    redirectUri: state.redirectUri,
-    originalState: state.originalState,
+    redirectUri,
+    originalState,
   }
 }

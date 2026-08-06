@@ -24,11 +24,35 @@ import { registerCalculatorTools } from './tools/calculators.js'
 import { registerCascadeTools } from './tools/cascade.js'
 import { BullrunOAuthProvider, RedirectError, handleGitHubCallback } from './auth/oauth-provider.js'
 import { verifyToken } from './auth/token-store.js'
+import { signState, isValidRedirectUri } from './auth/oauth-security.js'
 
 const app = new Hono()
 const provider = new BullrunOAuthProvider()
 
-app.use('*', cors())
+// Browser-origin CORS allowlist. MCP clients (Claude backend, Claude Desktop)
+// call server-side and don't participate in CORS at all — this list only
+// matters for browser-based clients. Wildcard was previously used, which
+// let any website with credentials-in-headers call the endpoint.
+const CORS_ALLOWED_ORIGINS = new Set([
+  'https://claude.ai',
+  'https://www.claude.ai',
+  'https://claude.com',
+  'https://www.claude.com',
+  'https://console.anthropic.com',
+  'https://bullrundata.com',
+  'https://www.bullrundata.com',
+  'https://market.bullrundata.com',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:6274',
+])
+
+app.use('*', cors({
+  origin: (origin) => (origin && CORS_ALLOWED_ORIGINS.has(origin) ? origin : null),
+  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'Mcp-Session-Id'],
+  exposeHeaders: ['Mcp-Session-Id'],
+}))
 
 // ─── OAuth Discovery ───────────────────────────────────────────
 
@@ -56,8 +80,16 @@ app.get('/authorize', async (c) => {
   const state = c.req.query('state') || ''
   const codeChallenge = c.req.query('code_challenge') || ''
 
-  // Build state for GitHub callback
-  const oauthState = JSON.stringify({
+  // Refuse to hand off to GitHub if redirect_uri is malformed or points at
+  // a non-http(s) scheme. Otherwise the callback later echoes the code to
+  // whatever URI we're told (javascript:, data:, file:).
+  if (!isValidRedirectUri(redirectUri)) {
+    return c.json({ error: 'invalid_request', error_description: 'invalid redirect_uri' }, 400)
+  }
+
+  // HMAC-signed state binds this authorization to us; verifyState in the
+  // /github/callback path rejects tampered payloads.
+  const oauthState = signState({
     clientId,
     redirectUri,
     codeChallenge,
@@ -69,7 +101,7 @@ app.get('/authorize', async (c) => {
   githubUrl.searchParams.set('client_id', GITHUB_CLIENT_ID)
   githubUrl.searchParams.set('redirect_uri', `${MCP_BASE_URL}/github/callback`)
   githubUrl.searchParams.set('scope', 'user:email')
-  githubUrl.searchParams.set('state', Buffer.from(oauthState).toString('base64url'))
+  githubUrl.searchParams.set('state', oauthState)
 
   return c.redirect(githubUrl.toString())
 })
@@ -135,8 +167,33 @@ app.post('/register', async (c) => {
 
 // ─── MCP Protocol (Streamable HTTP) ────────────────────────────
 
-// Store transports per session (in-memory, per Vercel function instance)
-const transports = new Map<string, WebStandardStreamableHTTPServerTransport>()
+// Session store with TTL. Sessions expire after 30min of inactivity;
+// sweepExpiredSessions() runs on every request so a serverless instance
+// can't accumulate them indefinitely.
+const SESSION_TTL_MS = 30 * 60 * 1000
+type Session = {
+  transport: WebStandardStreamableHTTPServerTransport
+  expiresAt: number
+}
+const sessions = new Map<string, Session>()
+
+function touchSession(id: string): Session | undefined {
+  const s = sessions.get(id)
+  if (!s) return undefined
+  if (s.expiresAt < Date.now()) {
+    sessions.delete(id)
+    return undefined
+  }
+  s.expiresAt = Date.now() + SESSION_TTL_MS
+  return s
+}
+
+function sweepExpiredSessions() {
+  const now = Date.now()
+  for (const [id, s] of sessions) {
+    if (s.expiresAt < now) sessions.delete(id)
+  }
+}
 
 function createMcpServer(apiKey?: string): McpServer {
   if (apiKey) {
@@ -160,32 +217,41 @@ function createMcpServer(apiKey?: string): McpServer {
 
 // Handles GET (SSE), POST (JSON-RPC), DELETE (session close) per MCP spec
 app.all('/mcp', async (c) => {
+  sweepExpiredSessions()
+
   const authHeader = c.req.header('Authorization')
   let apiKey: string | undefined
 
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7)
-    try {
-      const result = await verifyToken(token)
-      if (result) apiKey = result.apiKey
-    } catch {
-      // Token invalid — proceed without; tools will fail with 401
+    // Accept raw brd_ API keys directly (bypasses OAuth for CLI users
+    // running `claude mcp add --header "Authorization: Bearer brd_..."`).
+    if (token.startsWith('brd_') && !token.startsWith('brd_at_')) {
+      apiKey = token
+    } else {
+      try {
+        const result = await verifyToken(token)
+        if (result) apiKey = result.apiKey
+      } catch {
+        // Token invalid — proceed without; tools will fail with 401
+      }
     }
   }
 
   const sessionId = c.req.header('mcp-session-id')
+  const existing = sessionId ? touchSession(sessionId) : undefined
   let transport: WebStandardStreamableHTTPServerTransport
 
-  if (sessionId && transports.has(sessionId)) {
-    transport = transports.get(sessionId)!
+  if (existing) {
+    transport = existing.transport
   } else {
     transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomUUID(),
       onsessioninitialized: (id) => {
-        transports.set(id, transport)
+        sessions.set(id, { transport, expiresAt: Date.now() + SESSION_TTL_MS })
       },
       onsessionclosed: (id) => {
-        transports.delete(id)
+        sessions.delete(id)
       },
     })
 
