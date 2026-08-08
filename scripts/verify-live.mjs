@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * verify-live.mjs — comprehensive live-probe smoke test for the BullrunData
- * hosted MCP surface. Runs 21 checks across topology, OAuth security,
- * content parity, MCP protocol lifecycle, and dynamic client registration.
+ * hosted MCP surface. Runs 26 checks across topology, OAuth security,
+ * content parity, MCP protocol lifecycle, dynamic client registration, and
+ * the 6-point tool-description rubric for Pro-tier composite models.
  *
  * Usage:
  *   node scripts/verify-live.mjs                    # run all checks
@@ -85,6 +86,104 @@ async function fetchStatus(url, init = {}) {
     return { status: r.status, headers: r.headers, text: async () => r.text() }
   } catch (e) {
     return { status: 0, error: e.message }
+  }
+}
+
+// ─── Tool description rubric spec ────────────────────────────────────
+// Pro-tier composite algo models must satisfy the 6-point rubric enforced
+// below. Adding a new model? Add its entry here — the pre-push hook fails
+// the push if the description regresses. Full rationale: memory
+// feedback_model_shipping_pattern.md.
+const PRO_TIER_MODEL_TOOLS = {
+  housing_cycle: {
+    outputStates: ['expansion', 'topping', 'mid_cycle', 'bottoming', 'contraction'],
+    componentGroups: ['supply', 'demand', 'price', 'affordability', 'cost of capital'],
+    useCaseKeywords: ['single-family'],
+    boundaryPhrase: 'multifamily_cycle',       // must redirect MF questions elsewhere
+  },
+  multifamily_cycle: {
+    outputStates: ['expansion', 'topping', 'mid_cycle', 'bottoming', 'contraction'],
+    componentGroups: ['rent-demand', 'rent-pricing-power', 'supply-pressure', 'debt-cost', 'credit-stress'],
+    useCaseKeywords: ['multifamily', 'MF'],
+    triggerKeywords: ['MULTIFAMILY', 'MF', 'APARTMENT', 'RENTAL PROPERTY'],  // ALL-CAPS routing hints required
+  },
+  refi_window: {
+    outputStates: ['refi_now', 'refi_soon', 'wait_3mo', 'wait_6mo', 'unattractive'],
+    componentGroups: ['rate-level', 'rate-trajectory', 'fed-path', 'credit-availability', 'duration-spread'],
+    useCaseKeywords: ['refi', 'rollover'],
+  },
+  cre_stress: {
+    outputStates: ['calm', 'building', 'elevated', 'severe', 'crisis'],
+    componentGroups: ['delinquency', 'bank-willingness', 'cost-of-capital', 'systemic-stress'],
+    useCaseKeywords: ['distress', 'CRE'],
+    directionContract: true,   // requires explicit "HIGHER = MORE STRESS" or score_direction phrase
+  },
+}
+
+const DESC_MIN_CHARS = 500       // under this = too thin, Claude wastes tokens on trial calls
+const DESC_MAX_CHARS = 1500      // over this = bloated, dilutes signal
+
+function checkToolDescriptions(toolsList) {
+  console.log('\n─── Tool description rubric (6-point) ───')
+  const byName = Object.fromEntries((toolsList || []).map((t) => [t.name, t]))
+
+  for (const [toolName, spec] of Object.entries(PRO_TIER_MODEL_TOOLS)) {
+    const tool = byName[toolName]
+    if (!tool) {
+      record('rubric', `${toolName} present in tools/list`, false, 'tool missing from live tools/list')
+      continue
+    }
+    const desc = tool.description || ''
+    const missing = []
+
+    // (1) Pro tier requirement stated
+    if (!/pro\s*tier|requires\s*pro/i.test(desc)) missing.push('Pro tier requirement')
+
+    // (2) All output states listed
+    const missingStates = spec.outputStates.filter((s) => !desc.includes(s))
+    if (missingStates.length) missing.push(`output states: ${missingStates.join(',')}`)
+
+    // (3) All component groups listed
+    const missingComps = spec.componentGroups.filter((c) => !desc.toLowerCase().includes(c.toLowerCase()))
+    if (missingComps.length) missing.push(`components: ${missingComps.join(',')}`)
+
+    // (4) Output shape specified
+    const hasShape = /composite\s*score\s*0-100/i.test(desc) && /sub-scores/i.test(desc) && /confidence/i.test(desc)
+    if (!hasShape) missing.push('output shape (composite/sub-scores/confidence)')
+
+    // (5) Use case keywords
+    const missingUseCase = spec.useCaseKeywords.filter((k) => !new RegExp(`\\b${k}\\b`, 'i').test(desc))
+    if (missingUseCase.length) missing.push(`use case keywords: ${missingUseCase.join(',')}`)
+
+    // (6) Free tier 403 + upgrade link
+    if (!/free\s*tier/i.test(desc) || !/403/.test(desc) || !desc.includes('bullrundata.com/pricing')) {
+      missing.push('free-tier 403 + upgrade link')
+    }
+
+    // Bonus: trigger-keyword-in-CAPS rule for tools with domain overlap
+    if (spec.triggerKeywords) {
+      const missingTriggers = spec.triggerKeywords.filter((k) => !desc.includes(k))
+      if (missingTriggers.length) missing.push(`ALL-CAPS trigger keywords: ${missingTriggers.join(',')}`)
+    }
+
+    // Bonus: boundary phrase — the OTHER tool in an overlap must redirect elsewhere
+    if (spec.boundaryPhrase && !desc.includes(spec.boundaryPhrase)) {
+      missing.push(`boundary redirect to ${spec.boundaryPhrase}`)
+    }
+
+    // Bonus: direction contract for inverted-direction models
+    if (spec.directionContract) {
+      const hasDirection = /higher\s*=\s*more\s*stress/i.test(desc) || /score_direction/.test(desc) || /HIGHER\s*=\s*MORE/.test(desc)
+      if (!hasDirection) missing.push('direction contract (higher = more stress phrase or score_direction field)')
+    }
+
+    // Bonus: length range
+    if (desc.length < DESC_MIN_CHARS) missing.push(`too short (${desc.length} < ${DESC_MIN_CHARS})`)
+    if (desc.length > DESC_MAX_CHARS) missing.push(`too long (${desc.length} > ${DESC_MAX_CHARS})`)
+
+    const pass = missing.length === 0
+    record('rubric', `${toolName} description satisfies 6-point rubric`, pass,
+      pass ? `${desc.length} chars, all checks pass` : `missing: ${missing.join('; ')}`)
   }
 }
 
@@ -236,15 +335,24 @@ async function checkMcpProtocol() {
     body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }),
   })
   let toolCount = 0
+  let toolsList = []
   if (r.status === 200) {
     const txt = await r.text()
     try {
       const json = JSON.parse(txt.replace(/^event: message\ndata: /, '').trim())
-      toolCount = json.result?.tools?.length || 0
+      toolsList = json.result?.tools || []
+      toolCount = toolsList.length
     } catch { /* leave 0 */ }
   }
   record('mcp', 'tools/list → 30 registered tools',
     r.status === 200 && toolCount === 30, `status ${r.status}, tool count ${toolCount}`)
+
+  // 2b. Tool description rubric linter — mechanically enforce the 6-point
+  // discoverability contract for every Pro-tier model tool. Prevents the
+  // 2026-08-08 multifamily_cycle vs housing_cycle miss where soft "best used
+  // for X" language failed to steer Claude away from the wrong tool.
+  // Pattern spec: feedback_model_shipping_pattern.md
+  checkToolDescriptions(toolsList)
 
   // 3. tools/call dashboard_summary — expect real data with recession.probability field
   r = await fetchStatus(base, {
