@@ -274,4 +274,8 @@ Open an issue at [GitHub Issues](https://github.com/BullrunData/market-intellige
 
 ## License
 
-MIT
+Elastic License 2.0 — see [LICENSE](./LICENSE).
+
+You may use, modify, and redistribute this software. You may **not** offer it as
+a hosted or managed service that provides users with access to a substantial set
+of the features or functionality of the software.
