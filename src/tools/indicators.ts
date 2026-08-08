@@ -23,9 +23,9 @@ async function getByCategory(category: string, includeChange = false): Promise<I
 export function registerIndicatorTools(server: McpServer) {
   server.tool(
     'economic_indicator',
-    'Time series for any tracked economic indicator by series ID (e.g., VIXCLS, UNRATE, CPIAUCSL, T10Y2Y, MORTGAGE30US, BAMLH0A0HYM2). Returns date+value pairs. Use start_date + end_date for explicit period-over-period comparisons; falls back to `range` for trailing windows.',
+    'Time series for any tracked economic indicator by series ID (e.g., VIXCLS, UNRATE, CPIAUCSL, T10Y2Y, MORTGAGE30US, BAMLH0A0HYM2). Real-estate coverage includes housing starts (HOUST, HOUST5F for multifamily), permits (PERMIT, PERMIT5), FHFA home price index (USSTHPI), rental/homeowner vacancy (RRVRUSQ156N, RHVRUSQ156N), mortgage delinquency (DRSFRMACBS), CRE delinquency (DRCRELEXFACBS), CRE bank tightening (SUBLPDRCSM multifamily, SUBLPDRCSC construction), and CPI shelter (CUSR0000SEHA rent, CUSR0000SEHC owners\' equivalent rent). Returns date+value pairs. Use start_date + end_date for explicit period-over-period comparisons; falls back to `range` for trailing windows.',
     {
-      series_id: z.string().describe('Series ID (e.g., VIXCLS, UNRATE, DFF, CPIAUCSL, T10Y2Y, MORTGAGE30US)'),
+      series_id: z.string().describe('Series ID (e.g., VIXCLS, UNRATE, DFF, CPIAUCSL, T10Y2Y, MORTGAGE30US, HOUST5F, USSTHPI, DRCRELEXFACBS, CUSR0000SEHC). Aliases like MF_STARTS, FHFA_HPI, OER, CRE_DELINQUENCY resolve to canonical IDs.'),
       limit: z.number().optional().describe('Optional cap on observations returned (1-5000, most recent kept). Omit for full range.'),
       start_date: z.string().optional().describe('Start date YYYY-MM-DD. When provided, overrides `range`.'),
       end_date: z.string().optional().describe('End date YYYY-MM-DD. Defaults to today when start_date is set.'),
