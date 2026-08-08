@@ -10,3 +10,8 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "deps"
+    ignore:
+      # @vercel/node > 5.7.17 breaks MCP session lifecycle (POST-tools/call session
+      # reuse fails, DELETE session returns 400). Bisected 2026-08-08 — versions
+      # 5.9.5 and 5.9.3 both regress. Repin here only after upstream fix confirmed.
+      - dependency-name: "@vercel/node"
