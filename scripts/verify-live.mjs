@@ -133,6 +133,11 @@ const PRO_TIER_MODEL_TOOLS = {
     componentGroups: ['current-coverage', 'rate-headroom', 'fed-scenario-survival', 'amortization-buffer'],
     useCaseKeywords: ['DSCR', 'underwriting'],
   },
+  institutional_positioning_overlay: {
+    outputStates: ['max_contrarian_long', 'contrarian_long', 'neutral', 'contrarian_short', 'max_contrarian_short'],
+    componentGroups: ['cftc-positioning', 'rate-momentum', 'cap-rate-pressure', 'consensus-check'],
+    useCaseKeywords: ['contrarian', 'CFTC'],
+  },
 }
 
 const DESC_MIN_CHARS = 500       // under this = too thin, Claude wastes tokens on trial calls
@@ -359,8 +364,8 @@ async function checkMcpProtocol() {
       toolCount = toolsList.length
     } catch { /* leave 0 */ }
   }
-  record('mcp', 'tools/list → 33 registered tools',
-    r.status === 200 && toolCount === 33, `status ${r.status}, tool count ${toolCount}`)
+  record('mcp', 'tools/list → 34 registered tools',
+    r.status === 200 && toolCount === 34, `status ${r.status}, tool count ${toolCount}`)
 
   // 2b. Tool description rubric linter — mechanically enforce the 6-point
   // discoverability contract for every Pro-tier model tool. Prevents the

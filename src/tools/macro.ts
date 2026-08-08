@@ -216,6 +216,17 @@ export function registerMacroTools(server: McpServer) {
   )
 
   server.tool(
+    'institutional_positioning_overlay',
+    'Requires Pro tier. Institutional Positioning Overlay for Rates — contrarian setup detector combining CFTC 10Y Treasury futures positioning with rate momentum, cap rate pressure proxy, and retail-consensus checks. Returns composite score 0-100 (higher = CONTRARIAN LONG setup for RE / rate-sensitive positions), signal label (max_contrarian_long / contrarian_long / neutral / contrarian_short / max_contrarian_short), per-component sub-scores across 4 groups (cftc-positioning, rate-momentum, cap-rate-pressure, consensus-check), and confidence. CFTC positioning (35%) is the primary signal — big money max short bonds = crowded short = contrarian LONG setup for RE/duration. Rate momentum (25%) checks whether momentum agrees with positioning. Cap rate pressure (25%) proxies expansion pressure via 10Y + HY spread mechanics. Consensus check (15%) amplifies when retail is complacent while smart money is positioning contrarian. Best used for contrarian entry timing into rate-sensitive real-estate positions, spotting crowded trades that are ripe for reversal, and adding a positioning overlay on top of cycle-model timing decisions. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('Institutional Positioning Overlay'),
+    async () => {
+      const data = await apiGet('/api/v1/model/institutional-positioning-overlay')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
+
+  server.tool(
     'debt_coverage_sensitivity',
     'Requires Pro tier. Debt Coverage Sensitivity Model — desk tool for underwriting a SPECIFIC deal against Fed rate scenarios. Unlike the other composite models this takes PER-DEAL USER INPUTS. Returns composite score 0-100 (higher = safer coverage across scenarios), status label (covers_all_scenarios / stress_at_100bp / stress_at_50bp / stress_at_25bp / already_stressed), baseline DSCR + annual debt service, 8-scenario rate table (Fed +/- 25/50/75/100 bps → projected mortgage rate → DSCR), breakeven mortgage rate + bps headroom to breakeven, risk flags, per-component sub-scores across 4 groups (current-coverage, rate-headroom, fed-scenario-survival, amortization-buffer), and confidence. Current-coverage (35%) is the baseline signal; rate-headroom (30%) captures rate-shock absorption capacity; fed-scenario-survival (25%) is the pass/fail count; amortization-buffer (10%) penalizes IO periods and floating-rate exposure. Best used for underwriting-desk DSCR sensitivity, refi decisioning against Fed scenarios, and IO-period rollover risk assessment. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
     {
