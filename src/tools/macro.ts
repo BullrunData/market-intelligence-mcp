@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { apiGet } from '../lib/api-client.js'
+import { z } from 'zod'
+import { apiGet, apiPost } from '../lib/api-client.js'
 
 const readOnly = (title: string) => ({ title, readOnlyHint: true, destructiveHint: false } as const)
 
@@ -210,6 +211,26 @@ export function registerMacroTools(server: McpServer) {
     readOnly('Cap Rate Direction Signal'),
     async () => {
       const data = await apiGet('/api/v1/model/cap-rate-direction')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
+
+  server.tool(
+    'debt_coverage_sensitivity',
+    'Requires Pro tier. Debt Coverage Sensitivity Model — desk tool for underwriting a SPECIFIC deal against Fed rate scenarios. Unlike the other composite models this takes PER-DEAL USER INPUTS. Returns composite coverage score 0-100 (higher = safer coverage across scenarios), status label (covers_all_scenarios / stress_at_100bp / stress_at_50bp / stress_at_25bp / already_stressed), baseline DSCR + annual debt service, 8-scenario rate table (Fed +/- 25/50/75/100 bps → projected mortgage rate → DSCR), breakeven mortgage rate + bps headroom to breakeven, risk flags, per-component sub-scores across 4 groups (current-coverage, rate-headroom, fed-scenario-survival, amortization-buffer), and confidence. Current-coverage (35%) is the baseline signal; rate-headroom (30%) captures rate-shock absorption capacity; fed-scenario-survival (25%) is the pass/fail count; amortization-buffer (10%) penalizes IO periods and floating-rate exposure. Best used for underwriting-desk DSCR sensitivity, refi decisioning against Fed scenarios, and IO-period rollover risk assessment. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {
+      annual_noi: z.number().describe('Annual net operating income (dollars). Required.'),
+      loan_amount: z.number().describe('Loan principal (dollars). Required.'),
+      current_rate: z.number().optional().describe('Current mortgage rate as decimal (e.g. 0.0669 for 6.69%). Defaults to live 30Y mortgage rate if omitted.'),
+      amortization_years: z.number().default(30).describe('Amortization period in years. Default 30.'),
+      loan_type: z.string().default('fixed').describe('"fixed" (default) or "floating". Floating passes through Fed moves ~1:1; fixed passes through ~0.65 via refi.'),
+      io_period_years: z.number().default(0).describe('Interest-only period in years. Default 0 (fully amortizing).'),
+    },
+    readOnly('Debt Coverage Sensitivity'),
+    async ({ annual_noi, loan_amount, current_rate, amortization_years, loan_type, io_period_years }) => {
+      const body: Record<string, unknown> = { annual_noi, loan_amount, amortization_years, loan_type, io_period_years }
+      if (current_rate !== undefined) body.current_rate = current_rate
+      const data = await apiPost('/api/v1/model/debt-coverage-sensitivity', body)
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
