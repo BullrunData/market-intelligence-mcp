@@ -180,4 +180,15 @@ export function registerMacroTools(server: McpServer) {
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
+
+  server.tool(
+    'cre_stress',
+    'Requires Pro tier. Commercial Real Estate Stress Composite — early-warning signal for institutional distressed-buying and risk-off timing. Returns composite score 0-100 where HIGHER = MORE STRESS (opposite direction from the cycle models), a stage label (calm / building / elevated / severe / crisis), per-component sub-scores across 4 groups (delinquency, bank-willingness, cost-of-capital, systemic-stress), and confidence. Delinquency (35%) is the direct realized-stress signal; bank-willingness (25%) is the forward SLOOS signal; cost-of-capital (20%) captures credit-spread pricing; systemic-stress (20%) uses NFCI + VIX for the broad risk-off dimension. Response includes `score_direction: "higher_is_more_stress"` explicitly. Best used for CRE distress timing, opportunistic-capital deployment decisions, and risk-off portfolio moves. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('CRE Stress Composite'),
+    async () => {
+      const data = await apiGet('/api/v1/model/cre-stress')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
 }

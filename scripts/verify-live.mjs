@@ -243,8 +243,8 @@ async function checkMcpProtocol() {
       toolCount = json.result?.tools?.length || 0
     } catch { /* leave 0 */ }
   }
-  record('mcp', 'tools/list → 29 registered tools',
-    r.status === 200 && toolCount === 29, `status ${r.status}, tool count ${toolCount}`)
+  record('mcp', 'tools/list → 30 registered tools',
+    r.status === 200 && toolCount === 30, `status ${r.status}, tool count ${toolCount}`)
 
   // 3. tools/call dashboard_summary — expect real data with recession.probability field
   r = await fetchStatus(base, {
