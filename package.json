@@ -37,7 +37,7 @@
   "author": "BullrunData <support@bullrundata.com>",
   "dependencies": {
     "@hono/node-server": "^1.19.11",
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/node": "^5.6.22",
     "hono": "^4.13.0",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsx": "^4.19.0",
+    "tsx": "^4.23.5",
     "typescript": "^5.7.0"
   },
   "overrides": {
