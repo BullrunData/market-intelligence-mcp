@@ -15,3 +15,8 @@ updates:
       # reuse fails, DELETE session returns 400). Bisected 2026-08-08 — versions
       # 5.9.5 and 5.9.3 both regress. Repin here only after upstream fix confirmed.
       - dependency-name: "@vercel/node"
+      # TypeScript major bumps (7.x) break Vercel deploy — Vercel's bundled TS
+      # compiler is not compatible. Also TS7 tightens auto-@types/node inclusion.
+      # Allow minor/patch within 5.x, ignore major bumps.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
