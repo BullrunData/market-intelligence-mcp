@@ -202,4 +202,15 @@ export function registerMacroTools(server: McpServer) {
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
+
+  server.tool(
+    'cap_rate_direction',
+    'Requires Pro tier. Cap Rate Direction Signal — models the DIRECTION cap rates are moving (compressing = valuations rising for holders, expanding = valuations falling) without requiring absolute cap rate data (which needs paid feeds like CoStar/RCA). Returns composite score 0-100 (higher = MORE compression = valuations rising), direction label (compressing_strong / compressing / stable / expanding / expanding_strong), per-component sub-scores across 4 groups (rate-environment, credit-conditions, mbs-stress, risk-premium), and confidence. Rate environment (30%) is the mechanical driver because cap rates track 10Y + risk premium; credit conditions (25%) amplify via HY spread; MBS stress (20%) adds effective financing cost; risk premium (25%) captures NFCI + VIX for the systemic risk-off dimension. Best used for real-estate acquisition timing, portfolio rebalancing decisions, and understanding whether the rate + credit environment supports valuation appreciation or compression. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('Cap Rate Direction Signal'),
+    async () => {
+      const data = await apiGet('/api/v1/model/cap-rate-direction')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
 }
