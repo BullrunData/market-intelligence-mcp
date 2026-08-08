@@ -118,6 +118,11 @@ const PRO_TIER_MODEL_TOOLS = {
     useCaseKeywords: ['distress', 'CRE'],
     directionContract: true,   // requires explicit "HIGHER = MORE STRESS" or score_direction phrase
   },
+  rent_price_divergence: {
+    outputStates: ['expansion', 'widening', 'balanced', 'narrowing', 'compression'],
+    componentGroups: ['rent-growth', 'price-growth', 'divergence-magnitude', 'divergence-momentum'],
+    useCaseKeywords: ['multifamily', 'NOI'],
+  },
 }
 
 const DESC_MIN_CHARS = 500       // under this = too thin, Claude wastes tokens on trial calls
@@ -344,8 +349,8 @@ async function checkMcpProtocol() {
       toolCount = toolsList.length
     } catch { /* leave 0 */ }
   }
-  record('mcp', 'tools/list → 30 registered tools',
-    r.status === 200 && toolCount === 30, `status ${r.status}, tool count ${toolCount}`)
+  record('mcp', 'tools/list → 31 registered tools',
+    r.status === 200 && toolCount === 31, `status ${r.status}, tool count ${toolCount}`)
 
   // 2b. Tool description rubric linter — mechanically enforce the 6-point
   // discoverability contract for every Pro-tier model tool. Prevents the

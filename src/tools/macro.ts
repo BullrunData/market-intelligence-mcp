@@ -191,4 +191,15 @@ export function registerMacroTools(server: McpServer) {
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
+
+  server.tool(
+    'rent_price_divergence',
+    'Requires Pro tier. Rent-to-Price Divergence Signal — leading indicator for multifamily NOI trends. Detects when rents outpace prices (bullish for MF NOI expansion 2-4 quarters ahead) or prices outpace rents (NOI compression risk). Returns composite score 0-100 (higher = rents outpacing prices = NOI expansion setup), signal label (expansion / widening / balanced / narrowing / compression), per-component sub-scores across 4 groups (rent-growth, price-growth, divergence-magnitude, divergence-momentum), current divergence in percentage points, historical 5-year percentile of the current divergence, and confidence. Divergence magnitude (50%) and momentum (30%) dominate the composite because the DELTA between rent growth and price growth is what predicts MF NOI, not absolute growth rates. Best used for multifamily acquisition timing (buy into rent-dominant expansion setups), NOI expansion forecasting, and cap-rate compression risk assessment. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('Rent-to-Price Divergence Signal'),
+    async () => {
+      const data = await apiGet('/api/v1/model/rent-price-divergence')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
 }
