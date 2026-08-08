@@ -1,33 +1,13 @@
 #!/usr/bin/env node
 /**
- * verify-live.mjs — comprehensive live-probe smoke test for the BullrunData
- * hosted MCP surface. Runs 26 checks across topology, OAuth security,
- * content parity, MCP protocol lifecycle, dynamic client registration, and
- * the 6-point tool-description rubric for Pro-tier composite models.
+ * Live smoke test for the hosted MCP surface. Read-only.
  *
  * Usage:
- *   node scripts/verify-live.mjs                    # run all checks
- *   node scripts/verify-live.mjs --skip-auth        # skip API-key-required checks
+ *   node scripts/verify-live.mjs               # all checks
+ *   node scripts/verify-live.mjs --skip-auth   # skip auth-required checks
  *
- * Env vars:
- *   BULLRUNDATA_API_KEY   — required for MCP protocol checks (initialize,
- *                           tools/list, tools/call, session lifecycle)
- *
- * Exit codes:
- *   0   all checks passed
- *   1   one or more checks failed (details in output)
- *
- * When to run:
- *   - Before pushing to `market-intelligence-mcp` or `bullrundata-site`
- *   - After Vercel deploy lands, to confirm no regressions
- *   - Weekly, to catch external-provider drift (GitHub OAuth app config,
- *     Anthropic listing edits, DNS)
- *
- * Design notes:
- *   - Probes LIVE production URLs only. Read-only, safe to run anytime.
- *   - Fails LOUD (non-zero exit) on any regression — never silently degrades.
- *   - Distinguishes auth-required checks so CI can run --skip-auth without a
- *     key and still catch the topology + unauth-security regressions.
+ * Env: BULLRUNDATA_API_KEY (required for MCP protocol checks).
+ * Exit: 0 all pass · 1 any fail.
  */
 
 import { readFileSync, existsSync } from 'node:fs'
@@ -90,10 +70,9 @@ async function fetchStatus(url, init = {}) {
 }
 
 // ─── Tool description rubric spec ────────────────────────────────────
-// Pro-tier composite algo models must satisfy the 6-point rubric enforced
+// Pro-tier composite model tools must satisfy a 6-point rubric enforced
 // below. Adding a new model? Add its entry here — the pre-push hook fails
-// the push if the description regresses. Full rationale: memory
-// feedback_model_shipping_pattern.md.
+// the push if the description regresses.
 const PRO_TIER_MODEL_TOOLS = {
   housing_cycle: {
     outputStates: ['expansion', 'topping', 'mid_cycle', 'bottoming', 'contraction'],
@@ -367,11 +346,8 @@ async function checkMcpProtocol() {
   record('mcp', 'tools/list → 34 registered tools',
     r.status === 200 && toolCount === 34, `status ${r.status}, tool count ${toolCount}`)
 
-  // 2b. Tool description rubric linter — mechanically enforce the 6-point
-  // discoverability contract for every Pro-tier model tool. Prevents the
-  // 2026-08-08 multifamily_cycle vs housing_cycle miss where soft "best used
-  // for X" language failed to steer Claude away from the wrong tool.
-  // Pattern spec: feedback_model_shipping_pattern.md
+  // 2b. Tool description rubric linter — enforces 6-point discoverability
+  // contract for Pro-tier model tools so LLMs pick the right tool first-try.
   checkToolDescriptions(toolsList)
 
   // 3. tools/call dashboard_summary — expect real data with recession.probability field
