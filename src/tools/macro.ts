@@ -169,4 +169,15 @@ export function registerMacroTools(server: McpServer) {
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
+
+  server.tool(
+    'refi_window',
+    'Requires Pro tier. Refi Window Timing signal for rate-sensitive borrowers (MF operators, commercial RE, any levered position facing refi/rollover). Returns composite score 0-100 (higher = better window now), a window label (refi_now / refi_soon / wait_3mo / wait_6mo / unattractive), per-component sub-scores across 5 groups (rate-level, rate-trajectory, fed-path, credit-availability, duration-spread), rate scenarios projecting the 30Y mortgage under Fed +/- 25/50/75/100 bps moves, and confidence. Rate-level (30%) and rate-trajectory (25%) are dominant; Fed path (20%) is the forward view; credit-availability (15%) determines whether the deal clears; duration-spread (10%) tells you if the 15Y is meaningfully cheaper than the 30Y. Best used for "should I refi now or wait?" questions and balloon-rollover timing. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('Refi Window Timing'),
+    async () => {
+      const data = await apiGet('/api/v1/model/refi-window')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
 }
