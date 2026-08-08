@@ -158,4 +158,15 @@ export function registerMacroTools(server: McpServer) {
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
     },
   )
+
+  server.tool(
+    'multifamily_cycle',
+    'Requires Pro tier. US multifamily investment regime classifier — expansion / topping / mid_cycle / bottoming / contraction, reading as accumulate / trim / hold / distress-entry / distress-deepening for institutional MF investors — from a proprietary weighted model over 5 component groups (rent-demand, rent-pricing-power, supply-pressure, debt-cost, credit-stress). Returns composite score 0-100, per-component sub-scores with interpretations, 3-month trend, and confidence. Debt is weighted heavier (25%) than in the general housing_cycle model because MF returns are more rate-sensitive due to portfolio leverage. Best used for multifamily acquisition timing, underwriting stance, refi-window vs distress-hunting decisions. Free tier receives a 403 with upgrade link (https://bullrundata.com/pricing).',
+    {},
+    readOnly('US Multifamily Cycle Regime'),
+    async () => {
+      const data = await apiGet('/api/v1/model/multifamily')
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+    },
+  )
 }
