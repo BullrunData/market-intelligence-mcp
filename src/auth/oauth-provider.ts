@@ -138,11 +138,15 @@ export class BullrunOAuthProvider implements OAuthServerProvider {
     const result = await verifyToken(token)
     if (!result) throw new Error('Invalid access token')
 
+    // Do NOT include the raw api_key in AuthInfo.extra. The MCP SDK's error
+    // handlers may serialize AuthInfo into response bodies; leaking a live
+    // credential through an error path is how we shipped the 2026-08-05
+    // incident. Downstream request handlers look up the api_key directly via
+    // verifyToken(token) in http-server.ts, so extra is not needed here.
     return {
       token,
       clientId: result.clientId,
       scopes: result.scopes ? result.scopes.split(' ') : [],
-      extra: { apiKey: result.apiKey },
     }
   }
 }
